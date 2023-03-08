@@ -15,6 +15,8 @@ setup(
         'Operating System :: POSIX :: Linux',
     ],
     packages=find_packages(),
+    package_dir={"": "."},
+    package_data={"": ["templates/*"]},
     include_package_data=True,
     install_requires=[
         'aiofiles',
