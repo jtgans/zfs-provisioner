@@ -24,14 +24,15 @@ log = logging.getLogger('zfs-provisioner')
 
 @dataclasses.dataclass
 class Config:
-    provisioner_name: str = 'asteven/zfs-provisioner'
-    namespace: str = 'kube-system'
-    parent_dataset: str = 'chaos/data/zfs-provisioner'
-    dataset_mount_dir: str = '/var/lib/zfs-provisioner'
-    container_image: str = 'asteven/zfs-provisioner'
+    provisioner_name: str = 'zfs-provisioner'
+    namespace: str = 'zfs'
+    parent_dataset: str = 'tank/provisioner'
+    dataset_mount_dir: str = '/tank/provisioner'
     node_name: Optional[str] = None
+
     # Path to a config file.
     config: Optional[str] = None
+
     # The config loaded from `config` as a dict.
     dataset_config: Optional[Dict] = dataclasses.field(default_factory=dict)
     dataset_phase_annotations: Dict[str, str] = dataclasses.field(default_factory=dict)
@@ -194,7 +195,7 @@ async def create_dataset(name, namespace, body, meta, spec, patch, logger, **_):
     storage_class_name = spec['storageClassName']
     storage_class = CONFIG.storage_classes[storage_class_name]
 
-    pv_name = f'pvc-{meta.uid}'
+    pv_name = f'{namespace}-{name}'
 
     storage_class_mode = storage_class.parameters.get('mode', 'local')
     if storage_class_mode == storage_class.MODE_LOCAL:
@@ -234,9 +235,6 @@ async def create_dataset(name, namespace, body, meta, spec, patch, logger, **_):
         # Store dataset for later use in deletion handler.
         patch.metadata.annotations[CONFIG.dataset_annotation] = json.dumps(dataclasses.asdict(dataset))
 
-    #elif storage_class_mode == storage_class.MODE_NFS:
-    #   - get nfs server node name from config, schedule create pod create
-    #   - setup nfs export, if at all possible using zfs property instead of exportfs
     else:
         raise kopf.HandlerFatalError(f'Unsupported storage class mode: {storage_class_mode}')
 
